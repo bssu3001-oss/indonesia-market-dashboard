@@ -411,7 +411,7 @@ async function fetchQuote(ticker) {
 }
 
 async function fetchAllLive() {
-  const tickers = ['%5EJKSE','%5EJKLQ45','EIDO','IDR=X','DX-Y.NYB','EEM','%5EVIX','BZ=F','KOL'];
+  const tickers = ['%5EJKSE','%5EJKLQ45','EIDO','USDIDR=X','DX-Y.NYB','EEM','%5EVIX','BZ=F','KOL'];
   const results = await Promise.all(tickers.map(t=>fetchQuote(t).catch(()=>null)));
   const [ihsg, lq45, eido, idr, dxy, eem, vix, crude, kol] = results;
 
@@ -743,7 +743,8 @@ document.getElementById('ai-q').addEventListener('keydown',e=>{if(e.key==='Enter
 if (!getKey()) document.getElementById('key-setup').style.display='block';
 
 async function init() {
-  const chartData = await loadChart('d1');
+  let chartData = await loadChart('d1');
+  if (!chartData) { chartData = await loadChart('d5'); }
   if (chartData) renderChart(chartData.labels, chartData.prices);
   const live = await fetchAllLive().catch(()=>null);
   await fetchNews().catch(()=>{});
