@@ -338,9 +338,9 @@ def main():
     client_secret   = os.environ.get("KAKAO_CLIENT_SECRET", "").strip() or None
     anthropic_key   = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 
-    if not rest_api_key or not refresh_token:
-        print("⚠️  KAKAO 환경변수 없음 — 알림 건너뜀")
-        return
+    kakao_available = bool(rest_api_key and refresh_token)
+    if not kakao_available:
+        print("⚠️  KAKAO 환경변수 없음 — 카카오 알림 건너뜀, 데이터 수집은 계속")
 
     now_kst = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
     slot_kr = {"morning": "오전", "afternoon": "오후", "evening": "저녁"}.get(get_run_slot(), "")
@@ -349,8 +349,10 @@ def main():
     print(f"[{now_kst}] 인도네시아증시 알림체크 시작")
     state = load_state()
 
-    print("카카오 토큰 갱신 중...")
-    access_token = kakao_get_access_token(rest_api_key, refresh_token, client_secret)
+    access_token = None
+    if kakao_available:
+        print("카카오 토큰 갱신 중...")
+        access_token = kakao_get_access_token(rest_api_key, refresh_token, client_secret)
 
     print("IHSG 데이터 수집 중...")
     data = fetch_market_data()
@@ -373,7 +375,8 @@ def main():
                f"━━━━━━━━━━━━\n"
                f"종합신호: {sc_emoji} {sc_label} ({pct_score}점)\n"
                f"{sc_desc}")
-        kakao_send(access_token, msg)
+        if access_token:
+            kakao_send(access_token, msg)
         mark_sent(state, "ai_comment")
         save_state(state)
 
@@ -387,7 +390,8 @@ def main():
         if already_sent(state, key):
             print(f"  ⏭ 오늘 이 슬롯에 이미 보낸 알림 스킵: {key}")
             continue
-        kakao_send(access_token, alert["msg"])
+        if access_token:
+            kakao_send(access_token, alert["msg"])
         mark_sent(state, key)
         save_state(state)
         print(f"  → {key}: {alert['msg'][:50]}...")
