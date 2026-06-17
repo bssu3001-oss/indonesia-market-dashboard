@@ -76,7 +76,7 @@
   }
 
   const RANGE_DEFS = [
-    { key: 'd1',  interval: '5m',  range: '1d',  mode: 'time' },
+    { key: 'd1',  interval: '1d',  range: '5d',  mode: 'date' },
     { key: 'd5',  interval: '1d',  range: '5d',  mode: 'date' },
     { key: 'd30', interval: '1d',  range: '1mo', mode: 'date' },
     { key: 'mo3', interval: '1d',  range: '3mo', mode: 'date' },
