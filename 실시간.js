@@ -367,14 +367,14 @@
       }
       return null;
     }
-    function ko(id, gKw, rKw, gT, rT, nT) {
+    function ko(id, gKw, rKw, gT, rT, nT, dT) {
       const isG = gKw.some(k => all.includes(k));
       const isR = rKw.some(k => all.includes(k));
       let cls, text;
       if      (isG && !isR) { cls = 'badge-g'; text = gT; }
       else if (isR && !isG) { cls = 'badge-r'; text = rT; }
       else if (isG && isR)  { cls = 'badge-y'; text = nT; }
-      else { cls = 'badge-b'; const _h = findRelatedHeadline(relKw[id] || []); if (!_h) { continue; } text = _h; }
+      else { const _h = findRelatedHeadline(relKw[id] || []); if (_h) { cls = 'badge-b'; text = _h; } else if (dT) { cls = 'badge-y'; text = dT; } else { continue; } }
       const el = document.getElementById(id);
       if (el) { el.textContent = text; el.className = 'badge ' + cls; }
     }
@@ -384,32 +384,32 @@
     ko('badge-bi',
       ['금리 인하','완화','BI 인하','인하 기대','통화 완화','피벗','BI 동결'],
       ['금리 인상','긴축','BI 인상','인상 우려','매파','BI 긴축'],
-      'BI 완화(호재)', 'BI 긴축(악재)', 'BI 혼조');
+      'BI 완화(호재)', 'BI 긴축(악재)', 'BI 혼조', 'BI 정책 관망');
 
     ko('badge-cpi',
       ['물가 안정','인플레 완화','물가 하락','물가 둔화','CPI 하락','디스인플레','인플레 둔화'],
       ['물가 상승','인플레 급등','물가 급등','CPI 상승','인플레 우려','인플레이션 심화'],
-      '물가 안정(호재)', '물가 상승(악재)', '물가 혼조');
+      '물가 안정(호재)', '물가 상승(악재)', '물가 혼조', '물가 혼조');
 
     ko('badge-gdp',
       ['GDP 성장','경제성장','성장률 상승','경기 호조','성장 가속','경기 반등','경제 회복'],
       ['GDP 둔화','성장 둔화','경기 침체','성장률 하락','경기 부진','경기 위축'],
-      'GDP 성장(호재)', 'GDP 둔화(악재)', 'GDP 혼조');
+      'GDP 성장(호재)', 'GDP 둔화(악재)', 'GDP 혼조', 'GDP 혼조');
 
     ko('badge-fed',
       ['연준 인하','금리 인하','파월 완화','연준 완화','연준 피벗','dovish'],
       ['연준 인상','연준 긴축','파월 매파','Fed 긴축','금리 동결 우려','hawkish'],
-      '연준 완화(호재)', '연준 긴축(악재)', '연준 불확실');
+      '연준 완화(호재)', '연준 긴축(악재)', '연준 불확실', '연준 불확실');
 
     ko('badge-trade',
       ['무역 협상','관세 완화','무역 합의','미-인도네시아 협정','수출 증가','관세 면제','무역 타결'],
       ['관세 부과','무역 갈등','무역 제재','수출 감소','관세 위협','관세 인상'],
-      '무역 호조(호재)', '무역 리스크(악재)', '무역 혼조');
+      '무역 호조(호재)', '무역 리스크(악재)', '무역 혼조', '무역 주시');
 
     ko('badge-commodity',
       ['석탄 상승','팜유 상승','니켈 상승','석탄 강세','팜유 강세','원자재 상승','자원 호조'],
       ['석탄 하락','팜유 하락','니켈 하락','석탄 약세','팜유 약세','원자재 하락','자원 부진'],
-      '자원 강세(호재)', '자원 약세(악재)', '자원 혼조');
+      '자원 강세(호재)', '자원 약세(악재)', '자원 혼조', '자원 혼조');
 
     const note = document.getElementById('news-live-note');
     if (note) note.textContent = '✓ 최신 뉴스 기반 자동 분류 (API 키 불필요)';
