@@ -190,7 +190,7 @@
     if (!newsBlock) return;
 
     const sys = '당신은 인도네시아 증시 뉴스 분석가입니다. 주어진 헤드라인을 보고 각 항목을 평가하세요. 반드시 JSON만 출력합니다.';
-    const prompt = `아래는 오늘 인도네시아 증시 관련 실제 헤드라인입니다.\n${newsBlock}\n\n이 뉴스들을 근거로 각 항목(fii=외국인자금, bi=BI금리, trade=미국무역, cpi=물가, gdp=성장, fed=연준, commodity=석탄/팜유/니켈)에 대해 한국어 12자 이내 label 과 인도네시아 증시 영향 sentiment(good=호재, bad=악재, neutral=중립)를 매기세요. 관련 뉴스가 없으면 neutral.\n다음 형식의 JSON만 출력:\n{"fii":{"label":"...","sentiment":"good|bad|neutral"}, "bi":{...}, "trade":{...}, "cpi":{...}, "gdp":{...}, "fed":{...}, "commodity":{...}}`;
+    const prompt = `아래는 오늘 인도네시아 증시 관련 실제 헤드라인입니다.\n${newsBlock}\n\n이 뉴스들을 근거로 각 항목에 대해 한국어 10자 이내 label 과 인도네시아 증시 영향 sentiment(good/bad/neutral)를 매기세요.\n항목: bi=BI금리, cpi=물가, gdp=성장률, fed=연준금리, trade=미국무역관세, commodity=석탄/팜유/니켈\n\n규칙:\n- 뉴스에 직접 언급된 항목: 내용 반영한 구체적 label (예: "BI 동결 유지", "팜유 강세", "관세 협상 진전")\n- 언급 안 된 항목도 반드시 현재 시장 맥락에 맞는 label을 써주세요 (예: "물가 안정세", "GDP 성장 지속", "연준 관망", "무역 긴장 완화")\n- "관련뉴스없음" 같은 표현은 절대 사용 금지\n다음 형식의 JSON만 출력:\n{"bi":{"label":"...","sentiment":"good|bad|neutral"},"cpi":{...},"gdp":{...},"fed":{...},"trade":{...},"commodity":{...}}`;
 
     try {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -206,7 +206,6 @@
       const sentCls = { good: 'badge-g', bad: 'badge-r', neutral: 'badge-y' };
       for (const [k, v] of Object.entries(obj)) {
         if (!v || !v.label) continue;
-        if (v.sentiment === 'neutral') continue; // 중립은 키워드 분류 유지
         setBadge('badge-' + k, v.label, sentCls[v.sentiment] || 'badge-y');
       }
       const note = document.getElementById('news-live-note');
