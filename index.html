@@ -1044,10 +1044,10 @@ ${newsLines || '뉴스 없음'}`;
       })
     });
     const d = await r.json();
-    if (d.error) { console.warn('AI API 오류:', d.error.message); return; }
+    if (d.error) { console.warn('AI API 오류:', d.error.message); if(onelinerEl) onelinerEl.textContent=savedOneliner; return; }
     const text = d.content?.[0]?.text || '';
     const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return;
+    if (!match) { if(onelinerEl) onelinerEl.textContent=savedOneliner; return; }
     const ag = JSON.parse(match[0]);
 
     if (onelinerEl) onelinerEl.textContent = ag.sc_oneliner || savedOneliner;
