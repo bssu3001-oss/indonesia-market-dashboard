@@ -147,10 +147,14 @@ def fetch_market_data():
 
     # 보조 지표
     us_vix = crude = usdidr = kol_pct = None
-    for ticker_sym, var_name in [("^VIX", "us_vix"), ("BZ=F", "crude"), ("IDR=X", "usdidr"), ("KOL", "kol")]:
+    eido = eido_pct = dxy = eem = eem_pct = kol = None
+    for ticker_sym, var_name in [("^VIX", "us_vix"), ("BZ=F", "crude"), ("IDR=X", "usdidr"),
+                                  ("KOL", "kol"), ("EIDO", "eido"), ("DX-Y.NYB", "dxy"), ("EEM", "eem")]:
         try:
             t = yf.Ticker(ticker_sym)
             val = t.fast_info.last_price
+            prev_c = t.fast_info.previous_close
+            chg = round((val - prev_c) / prev_c * 100, 2) if prev_c else 0
             if var_name == "us_vix":
                 us_vix = round(val, 1)
             elif var_name == "crude":
@@ -158,8 +162,13 @@ def fetch_market_data():
             elif var_name == "usdidr":
                 usdidr = round(val, 0)
             elif var_name == "kol":
-                prev = t.fast_info.previous_close
-                kol_pct = round((val - prev) / prev * 100, 2) if prev else 0
+                kol = round(val, 2); kol_pct = chg
+            elif var_name == "eido":
+                eido = round(val, 2); eido_pct = chg
+            elif var_name == "dxy":
+                dxy = round(val, 2)
+            elif var_name == "eem":
+                eem = round(val, 2); eem_pct = chg
         except Exception:
             pass
 
@@ -175,7 +184,13 @@ def fetch_market_data():
         "us_vix": us_vix,
         "crude": crude,
         "usdidr": usdidr,
+        "kol": kol,
         "kol_pct": kol_pct,
+        "eido": eido,
+        "eido_pct": eido_pct,
+        "dxy": dxy,
+        "eem": eem,
+        "eem_pct": eem_pct,
         "consec_down": consec_down,
     }
 
@@ -418,7 +433,13 @@ def main():
         "us_vix": data["us_vix"],
         "crude": data["crude"],
         "usdidr": data["usdidr"],
+        "kol": data.get("kol"),
         "kol_pct": data["kol_pct"],
+        "eido": data.get("eido"),
+        "eido_pct": data.get("eido_pct"),
+        "dxy": data.get("dxy"),
+        "eem": data.get("eem"),
+        "eem_pct": data.get("eem_pct"),
         "score_pct": pct_score,
         "score_label": sc_label,
         "score_emoji": sc_emoji,
