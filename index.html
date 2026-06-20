@@ -437,21 +437,26 @@ async function fetchAllLive() {
   const results = await Promise.all(tickers.map(t=>fetchQuote(t).catch(()=>null)));
   let [ihsg, lq45, eido, idr, dxy, eem, vix, crude, kol] = results;
 
-  // 프록시 실패 시 시장데이터.json(서버 수집·안정)으로 보강 → N/A 방지
+  // ①글로벌 공통지표(EEM·US VIX·DXY)는 미국 레포 JSON 한 곳에서 받아 모든 탭 동일하게 정규화
+  // ②자기 레포 JSON으로 나머지 N/A 보강
   try {
-    if (!ihsg||!eido||!idr||!dxy||!eem||!vix||!crude||!kol) {
-      const jr = await fetch('시장데이터.json?_='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null);
-      if (jr) {
-        const mk=(p,pc)=>(p!=null&&p!==0)?{price:p,pct:pc||0,prev:p,open:p,high:p,low:p,high52:p,low52:p,_stale:true}:null;
-        if(!ihsg && jr.ihsg!=null)   ihsg =mk(jr.ihsg, jr.pct);
-        if(!eido && jr.eido!=null)   eido =mk(jr.eido, jr.eido_pct);
-        if(!idr  && jr.usdidr!=null) idr  =mk(jr.usdidr, 0);
-        if(!dxy  && jr.dxy!=null)    dxy  =mk(jr.dxy, 0);
-        if(!eem  && jr.eem!=null)    eem  =mk(jr.eem, jr.eem_pct);
-        if(!vix  && jr.us_vix!=null) vix  =mk(jr.us_vix, 0);
-        if(!crude&& jr.crude!=null)  crude=mk(jr.crude, 0);
-        if(!kol  && jr.kol!=null)    kol  =mk(jr.kol, jr.kol_pct);
-      }
+    const mk=(p,pc)=>(p!=null&&p!==0)?{price:p,pct:pc||0,prev:p,open:p,high:p,low:p,high52:p,low52:p,_stale:true}:null;
+    const gj = await fetch('https://raw.githubusercontent.com/bssu3001-oss/us-market-dashboard/main/'+encodeURIComponent('시장데이터.json')).then(r=>r.ok?r.json():null).catch(()=>null);
+    if (gj) {
+      if (gj.eem!=null) eem = mk(gj.eem, gj.eem_pct);
+      if (gj.vix!=null) vix = mk(gj.vix, 0);
+      if (gj.dxy!=null) dxy = mk(gj.dxy, 0);
+    }
+    const jr = await fetch('시장데이터.json?_='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null);
+    if (jr) {
+      if(!eem  && jr.eem!=null)    eem  =mk(jr.eem, jr.eem_pct);
+      if(!vix  && jr.us_vix!=null) vix  =mk(jr.us_vix, 0);
+      if(!dxy  && jr.dxy!=null)    dxy  =mk(jr.dxy, 0);
+      if(!ihsg && jr.ihsg!=null)   ihsg =mk(jr.ihsg, jr.pct);
+      if(!eido && jr.eido!=null)   eido =mk(jr.eido, jr.eido_pct);
+      if(!idr  && jr.usdidr!=null) idr  =mk(jr.usdidr, 0);
+      if(!crude&& jr.crude!=null)  crude=mk(jr.crude, 0);
+      if(!kol  && jr.kol!=null)    kol  =mk(jr.kol, jr.kol_pct);
     }
   } catch(e) {}
 
@@ -531,7 +536,10 @@ async function fetchAllLive() {
       vol=Math.sqrt(rets.reduce((a,b)=>a+(b-mean)**2,0)/rets.length);
     }
     const pct1d=ihsg?.pct||0;
-    setBadge('badge-rsi',`1일 모멘텀 ${pct1d>=0?'▲':'▼'}${Math.abs(pct1d).toFixed(2)}%`,pct1d>1?'badge-g':pct1d<-1?'badge-r':'badge-b');
+    // badge-rsi는 실시간.js가 진짜 RSI를 설정함 — 아직 안 들어왔을 때만 임시 표시(진짜 RSI를 덮지 않음)
+    const _rsiEl=document.getElementById('badge-rsi');
+    if(!_rsiEl||!/RSI/.test(_rsiEl.textContent))
+      setBadge('badge-rsi',`1일 모멘텀 ${pct1d>=0?'▲':'▼'}${Math.abs(pct1d).toFixed(2)}%`,pct1d>1?'badge-g':pct1d<-1?'badge-r':'badge-b');
     let maBadge='badge-y',maText='혼조';
     if (ma5&&ma13&&ma26) {
       if (cur>ma5&&ma5>ma13&&ma13>ma26){maBadge='badge-g';maText='정배열(상승)';}
@@ -876,6 +884,21 @@ function applyAnalysis(ag) {
       }
     }
   }
+  bumpDangerForRSI();
+}
+
+// RSI 과매수(≥75)는 단기 위험을 올림 → 위험도가 '낮음'이면 '보통'으로 끌어올림
+function bumpDangerForRSI() {
+  const dEl = document.getElementById('sc-danger');
+  const rEl = document.getElementById('badge-rsi');
+  if (!dEl || !rEl) return;
+  const m = (rEl.textContent||'').match(/RSI\s*([\d.]+)/);
+  if (!m) return;
+  const rsi = parseFloat(m[1]);
+  if (rsi >= 75 && /낮음/.test(dEl.textContent)) {
+    dEl.textContent = '위험도 보통';
+    dEl.style.background = '#fdf6e8'; dEl.style.color = '#BA7517';
+  }
 }
 
 function setNewsBadgesDirect(titles) {
@@ -1070,6 +1093,7 @@ ${newsLines || '뉴스 없음'}`;
       if (ag[k]?.text && ag[k]?.cls) setBadge(domId, ag[k].text, ag[k].cls);
     });
     recalcScorecard();
+    bumpDangerForRSI();
   } catch(e) {
     console.warn('AI error:', e);
     if (onelinerEl && onelinerEl.textContent === '🤖 AI 분석 중...') onelinerEl.textContent = savedOneliner;
