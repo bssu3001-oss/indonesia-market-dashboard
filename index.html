@@ -478,7 +478,9 @@ async function fetchAllLive() {
     setBadge('badge-dxy',`DXY ${fmt(dxy.price)} ${arrow(dxy.pct)}${Math.abs(dxy.pct).toFixed(2)} — ${dxy.price>104?'달러 강세':dxy.price>100?'달러 주의':'안정'}`,c);
   }
   if (eem) {
-    localStorage.setItem('shared_eem', JSON.stringify({price:eem.price,pct:eem.pct,ts:Date.now()}));
+    const _ce=JSON.parse(localStorage.getItem('shared_eem')||'null');
+    if (_ce&&(Date.now()-_ce.ts)<600000){eem={price:_ce.price,pct:_ce.pct};}
+    else{localStorage.setItem('shared_eem',JSON.stringify({price:eem.price,pct:eem.pct,ts:Date.now()}));}
     const c=eem.pct>=0.5?'badge-g':eem.pct<=-0.5?'badge-r':'badge-b';
     setBadge('badge-eem',`$${fmt(eem.price)} ${arrow(eem.pct)}${Math.abs(eem.pct).toFixed(2)}% — ${eem.pct>=0.5?'신흥국 상승(호재)':eem.pct<=-0.5?'신흥국 하락':'보합'}`,c);
   } else {
@@ -837,8 +839,22 @@ function applyAnalysis(ag) {
     if (extra) {
       extra.style.display = 'block';
       if (ag.sc_price_pos) document.getElementById('sc-price-pos').textContent = ag.sc_price_pos;
-      if (ag.sc_appeal)    document.getElementById('sc-appeal').textContent    = ag.sc_appeal;
-      if (ag.sc_risk)      document.getElementById('sc-risk').textContent      = ag.sc_risk;
+      if (ag.sc_appeal) {
+        let _appeal = ag.sc_appeal;
+        const _idrCls = [...(document.getElementById('badge-idr')?.classList||[])];
+        if (_idrCls.includes('badge-r') && _appeal.includes('루피아 강세')) {
+          _appeal = _appeal.replace(/루피아\s*강세[,\s]*/g,'').trim() || 'EIDO 추세 확인 필요';
+        }
+        document.getElementById('sc-appeal').textContent = _appeal;
+      }
+      if (ag.sc_risk) {
+        let _risk = ag.sc_risk;
+        const _idrCls2 = [...(document.getElementById('badge-idr')?.classList||[])];
+        if (_idrCls2.includes('badge-r') && !_risk.includes('루피아') && !_risk.includes('환율')) {
+          _risk = '루피아 약세(환율 손실), ' + _risk;
+        }
+        document.getElementById('sc-risk').textContent = _risk;
+      }
       if (ag.sc_entry)     document.getElementById('sc-entry').textContent     = ag.sc_entry;
       if (ag.sc_danger) {
         const badge = document.getElementById('sc-danger');
