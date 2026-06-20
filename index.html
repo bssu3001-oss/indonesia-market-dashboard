@@ -87,11 +87,6 @@ body { font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; background
 .footer { font-size: 11px; color: var(--text3); text-align: center; margin-top: 20px; }
 @media (max-width: 600px) {
   .header h1 { font-size: 17px; }
-  #sc-desc { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  #sc-desc > div { display: flex !important; flex-wrap: nowrap !important; gap: 3px !important; min-width: max-content; }
-  #sc-desc > div > div { min-width: 52px; padding: 5px 3px !important; }
-  #sc-desc > div > div span:first-child { font-size: 8px !important; }
-  #sc-desc > div > div span:last-child { font-size: 10px !important; }
 }
 </style>
 </head>
@@ -725,7 +720,7 @@ function ruleBasedAnalysis(liveData) {
   const vixColor = !vix?'blue':vix>28?'red':vix>20?'yellow':'green';
   const vixShort = vix?vix.toFixed(1)+' '+vixState:'N/A';
   const idrColor = !idr?'blue':idr>16500?'red':idr>15500?'yellow':'green';
-  const idrShort = idr?'Rp'+(Math.round(idr/100)*100).toLocaleString('ko-KR'):'N/A';
+  const idrShort = idr?'Rp'+(idr/1000).toFixed(1)+'K':'N/A';
   const rsiText  = document.getElementById('badge-rsi')?.textContent || '';
   const rsiMatch = rsiText.match(/RSI\s*([\d.]+)/);
   const rsiVal   = rsiMatch ? parseFloat(rsiMatch[1]) : null;
