@@ -841,6 +841,15 @@ function applyAnalysis(ag) {
 function setNewsBadgesDirect(titles) {
   if (!titles || !titles.length) return;
   const all = titles.join(' ').toLowerCase();
+  function cleanT(t) { return t.replace(/\[.*?\]\s*/,'').replace(/\s*[-–]\s*\S+$/, '').trim(); }
+  function trimT(t) { return t.length > 28 ? t.slice(0,28)+'…' : t; }
+  function findKw(kws) {
+    for (const kw of kws) {
+      const f = titles.find(t => t.toLowerCase().includes(kw));
+      if (f) return trimT(cleanT(f));
+    }
+    return null;
+  }
   const cfg = [
     ['badge-bi',
       ['금리 인하','bi 완화','통화 완화','피벗','bi 인하','pemangkasan suku bunga','pelonggaran','dovish','rate cut','suku bunga turun','루피아 강세','rupiah menguat'],
@@ -888,7 +897,7 @@ function setNewsBadgesDirect(titles) {
     if      (isG && !isR) { text = gT; cls = 'badge-g'; }
     else if (isR && !isG) { text = rT; cls = 'badge-r'; }
     else if (isG && isR)  { text = nT; cls = 'badge-y'; }
-    else { text = dT; cls = 'badge-y'; }
+    else { const h = findKw(relKw); if (h) { text = h; cls = 'badge-b'; } else { text = dT; cls = 'badge-y'; } }
     el.textContent = text; el.className = 'badge ' + cls;
   });
 }
