@@ -133,9 +133,11 @@
     const ma5 = sma(weeklyPrices, 5), ma13 = sma(weeklyPrices, 13), ma26 = sma(weeklyPrices, 26);
     if (ma5 != null && ma13 != null && ma26 != null) {
       let lbl, cls;
-      if (cur > ma5 && ma5 > ma13 && ma13 > ma26) { lbl = '정배열(상승)'; cls = 'badge-g'; }
+      if (cur > ma5 && ma5 > ma13 && ma13 > ma26)      { lbl = '정배열(상승)'; cls = 'badge-g'; }
       else if (cur < ma5 && ma5 < ma13 && ma13 < ma26) { lbl = '역배열(하락)'; cls = 'badge-r'; }
-      else { lbl = '혼조'; cls = 'badge-y'; }
+      else if (cur > ma5 && cur > ma13)                 { lbl = '단기 상승';    cls = 'badge-y'; }
+      else if (cur < ma5 && cur < ma13)                 { lbl = '단기 하락';    cls = 'badge-y'; }
+      else                                               { lbl = '혼조';        cls = 'badge-y'; }
       setBadge('badge-ma', lbl, cls);
     }
 
@@ -223,8 +225,10 @@
     const rsi = calcRSI(weekly, 14);
     const ma5 = sma(weekly, 5), ma13 = sma(weekly, 13), ma26 = sma(weekly, 26);
     let maState = '혼조';
-    if (cur > ma5 && ma5 > ma13 && ma13 > ma26) maState = '정배열(상승)';
+    if (cur > ma5 && ma5 > ma13 && ma13 > ma26)      maState = '정배열(상승)';
     else if (cur < ma5 && ma5 < ma13 && ma13 < ma26) maState = '역배열(하락)';
+    else if (cur > ma5 && cur > ma13)                 maState = '단기 상승';
+    else if (cur < ma5 && cur < ma13)                 maState = '단기 하락';
     const mom = weekly.length >= 5 ? (cur - weekly[weekly.length - 5]) / weekly[weekly.length - 5] * 100 : 0;
     let std = 0;
     if (weekly.length >= 13) {
