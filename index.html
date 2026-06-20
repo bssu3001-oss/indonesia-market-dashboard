@@ -85,9 +85,9 @@ body { font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; background
 .quick-btn { font-size: 11px; padding: 6px 11px; }
 .ai-response { font-size: 13px; color: var(--text); line-height: 1.8; padding: 14px; background: var(--bg); border-radius: 10px; min-height: 60px; white-space: pre-wrap; }
 .footer { font-size: 11px; color: var(--text3); text-align: center; margin-top: 20px; }
-@media (max-width: 400px) {
+@media (max-width: 600px) {
   .header h1 { font-size: 17px; }
-  #sc-desc > div { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  #sc-desc > div { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 3px !important; flex-wrap: unset !important; }
 }
 </style>
 </head>
@@ -733,7 +733,7 @@ function ruleBasedAnalysis(liveData) {
   const eemPctC  = _liveData?.eem?.pct ?? null;
   const eemColor = eemPctC == null ? 'blue' : eemPctC >= 0.5 ? 'green' : eemPctC <= -0.5 ? 'red' : 'yellow';
   const eemShort = eemPctC != null ? `${eemPctC >= 0 ? '▲' : '▼'}${Math.abs(eemPctC).toFixed(2)}%` : '--';
-  const sc_desc = `<div style="display:flex;gap:3px;flex-wrap:wrap;">${mkChip2('이평선',maShort,maColor)}${mkChip2('모멘텀',momShort,momColor)}${mkChip2('RSI',rsiShort,rsiColor)}${mkChip2('VIX',vixShort,vixColor)}${mkChip2('EIDO',eidoShort,eidoColor)}${mkChip2('EEM',eemShort,eemColor)}${mkChip2('IDR',idrShort,idrColor)}</div>`;
+  const sc_desc = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${mkChip2('이평선',maShort,maColor)}${mkChip2('모멘텀',momShort,momColor)}${mkChip2('RSI',rsiShort,rsiColor)}${mkChip2('VIX',vixShort,vixColor)}${mkChip2('EIDO',eidoShort,eidoColor)}${mkChip2('EEM',eemShort,eemColor)}${mkChip2('IDR',idrShort,idrColor)}</div>`;
 
   const trendConclusion = maBadge==='badge-g'
     ? (newsFavorable ? '상승 추세 + 뉴스 호재 — 눌림목 매수 적극 검토' : '상승 추세 유지 — 눌림목 매수 기회 탐색')
