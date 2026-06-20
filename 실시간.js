@@ -11,7 +11,10 @@
   const PROXIES = [
     (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.io/?${encodeURIComponent(u.replace('query2','query1'))}`,
     (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u.replace('query2','query1'))}`,
+    (u) => `https://thingproxy.freeboard.io/fetch/${u.replace('query2','query1')}`,
   ];
 
   async function proxyText(url, timeoutMs) {
@@ -203,6 +206,7 @@
       const sentCls = { good: 'badge-g', bad: 'badge-r', neutral: 'badge-y' };
       for (const [k, v] of Object.entries(obj)) {
         if (!v || !v.label) continue;
+        if (v.sentiment === 'neutral') continue; // 중립은 키워드 분류 유지
         setBadge('badge-' + k, v.label, sentCls[v.sentiment] || 'badge-y');
       }
       const note = document.getElementById('news-live-note');
@@ -333,9 +337,39 @@
     box.innerHTML = items.map((n) => {
       const ko = (n.ko || n.title).replace(/&/g, '&amp;').replace(/</g, '&lt;');
       const meta = [n.source, relTime(n.ts)].filter(Boolean).join(' · ');
-      return `<a href="${n.link}" target="_blank" rel="noopener" style="display:block;padding:9px 0;border-bottom:0.5px solid var(--border);text-decoration:none;color:var(--text);"><div style="font-size:13px;line-height:1.45;">${ko}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">${meta} ↗</div></a>`;
+      const ageDay = n.ts ? (Date.now()/1000 - n.ts) / 86400 : 0;
+      const dimStyle = ageDay > 7 ? 'opacity:0.4;' : '';
+      return `<a href="${n.link}" target="_blank" rel="noopener" style="display:block;padding:9px 0;border-bottom:0.5px solid var(--border);text-decoration:none;color:var(--text);${dimStyle}"><div style="font-size:13px;line-height:1.45;">${ko}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">${meta} ↗</div></a>`;
     }).join('');
   }
+
+  // ── 매크로 신호 섹션에 뉴스 이슈 리스트 렌더링 ──
+  function renderMacroNews() {
+    const box = document.getElementById('macro-news-list');
+    if (!box) return;
+    const items = window.__majorNewsItems || [];
+    if (!items.length) { box.innerHTML = '<div style="font-size:12px;color:var(--text3);">뉴스를 불러오지 못했어요</div>'; return; }
+    function clean(t) {
+      return (t||'').replace(/\[.*?\]\s*/g,'').replace(/\s*[-–—]\s*[\w가-힣]+\s*$/,'').trim().slice(0,60);
+    }
+    box.innerHTML = items.slice(0,5).map((n) => {
+      const title = clean(n.ko || n.title);
+      const time = relTime(n.ts);
+      return `<a href="${n.link}" target="_blank" rel="noopener" style="display:flex;align-items:flex-start;gap:6px;padding:7px 0;border-bottom:0.5px solid var(--border);text-decoration:none;color:var(--text);">
+        <span style="font-size:14px;margin-top:1px;">•</span>
+        <span>
+          <span style="font-size:12.5px;line-height:1.5;">${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+          ${time ? '<span style="display:block;font-size:10.5px;color:var(--text3);margin-top:2px;">' + time + ' ↗</span>' : ''}
+        </span>
+      </a>`;
+    }).join('');
+  }
+
+  window.fetchLatestNews = async function () {
+    const items = window.__majorNewsItems || [];
+    if (!items.length) return {};
+    return { '주요 뉴스': items.slice(0, 6).map((n) => n.ko || n.title) };
+  };
 
   // ── 한국어 뉴스 키워드로 뉴스 배지 자동 분류 (API 키 불필요) ──
   function updateNewsBadgesFromKorean() {
@@ -374,7 +408,7 @@
       if      (isG && !isR) { cls = 'badge-g'; text = gT; }
       else if (isR && !isG) { cls = 'badge-r'; text = rT; }
       else if (isG && isR)  { cls = 'badge-y'; text = nT; }
-      else { const _h = findRelatedHeadline(relKw[id] || []); if (_h) { cls = 'badge-b'; text = _h; } else if (dT) { cls = 'badge-y'; text = dT; } else { continue; } }
+      else { if (dT) { cls = 'badge-y'; text = dT; } else { return; } }
       const el = document.getElementById(id);
       if (el) { el.textContent = text; el.className = 'badge ' + cls; }
     }
@@ -471,37 +505,62 @@
   }
 
   async function runRealtime() {
+    // 캐시된 데이터로 즉시 초기 표시
     await loadCachedMarketData();
 
+    // 주요 뉴스 먼저 (번역·전역저장) → 이후 분석/신호에서 반영
+    try { await renderMajorNews(); } catch (e) {}
+
+    // 매크로 신호 섹션 이슈 리스트 업데이트
+    try { renderMacroNews(); } catch (e) {}
+
+    // 한국어 뉴스로 뉴스 배지 자동 분류 (API 키 불필요)
+    try { updateNewsBadgesFromKorean(); } catch (e) {}
+
+    // 기술지표 + AI 차트분석 — 주봉 직접 fetch
     let ihsgMeta = null;
     try {
-      // IHSG 차트 데이터 갱신
-      const url = `https://query2.finance.yahoo.com/v8/finance/chart/%5EJKSE?interval=1wk&range=1y`;
-      const j = await proxyJSON(url, 9000);
-      if (j) {
-        const res = j.chart.result[0];
-        const closes = (res.indicators.quote[0].close || []).filter(p => p != null);
-        ihsgMeta = res.meta;
-        if (closes.length >= 6) {
-          updateTechnicals(ihsgMeta, closes);
-          const d5url = `https://query2.finance.yahoo.com/v8/finance/chart/%5EJKSE?interval=1d&range=5d`;
-          const j5 = await proxyJSON(d5url, 6000);
-          const d5prices = j5 ? (j5.chart.result[0].indicators.quote[0].close || []).filter(p => p != null) : null;
-          buildAnalysis('IDX Composite (IHSG)', closes, d5prices, ihsgMeta);
+      const url1y = 'https://query2.finance.yahoo.com/v8/finance/chart/^JKSE?interval=1wk&range=1y';
+      const j1y = await proxyJSON(url1y, 9000);
+      if (j1y && j1y.chart && j1y.chart.result && j1y.chart.result[0]) {
+        const res1y = j1y.chart.result[0];
+        const weekly = (res1y.indicators.quote[0].close || []).filter(p => p != null);
+        ihsgMeta = res1y.meta;
+        if (weekly.length >= 6) {
+          updateTechnicals(ihsgMeta, weekly);
+          const url5d = 'https://query2.finance.yahoo.com/v8/finance/chart/^JKSE?interval=1d&range=5d';
+          const j5d = await proxyJSON(url5d, 6000);
+          const d5prices = (j5d && j5d.chart && j5d.chart.result && j5d.chart.result[0])
+            ? (j5d.chart.result[0].indicators.quote[0].close || []).filter(p => p != null)
+            : null;
+          buildAnalysis('IDX Composite (IHSG)', weekly, d5prices, ihsgMeta);
         }
       }
     } catch (e) {}
 
-    try { await renderMajorNews(); } catch (e) {}
-    try { updateNewsBadgesFromKorean(); } catch (e) {}
+    // 종합 신호 재계산 + 매수 타이밍 가이드 동기화
     try { if (typeof recalcScorecard === 'function') recalcScorecard(); } catch (e) {}
+    try { if (typeof buildChecklist === 'function') buildChecklist(); } catch (e) {}
 
+    // 최종 분석 — 1초 대기 후 덮어쓰기 (모든 배지 업데이트 완료 후)
     try {
       await new Promise(r => setTimeout(r, 1000));
+      if (typeof recalcScorecard === 'function') recalcScorecard();
+      if (typeof buildChecklist === 'function') buildChecklist();
+      // sc-desc 칩 항상 업데이트 (API 키 유무와 무관 — RSI 등 기술지표 반영)
+      try {
+        const descEl = document.getElementById('sc-desc');
+        if (descEl && typeof ruleBasedAnalysis === 'function' && typeof _liveData !== 'undefined') {
+          descEl.innerHTML = ruleBasedAnalysis(_liveData).sc_desc;
+        }
+      } catch(e) {}
       if (typeof applyAnalysis === 'function' && typeof ruleBasedAnalysis === 'function' && typeof _liveData !== 'undefined') {
         if (!getAnthropicKey()) applyAnalysis(ruleBasedAnalysis(_liveData));
       }
     } catch (e) {}
+
+    // 액션가이드 재생성 (뉴스 반영, AI 키 있을 때)
+    try { if (typeof window.updateActionGuide === 'function' && getAnthropicKey()) window.updateActionGuide(); } catch (e) {}
 
     try { if (getAnthropicKey()) await updateNewsSignals(); } catch (e) {}
   }
@@ -537,12 +596,6 @@
       if (d.content && d.content[0] && d.content[0].text) box.textContent = d.content[0].text;
       else box.textContent = '오류: ' + JSON.stringify(d.error || d);
     } catch (e) { box.textContent = '네트워크 오류: ' + e.message; }
-  };
-
-  window.fetchLatestNews = async function () {
-    const items = window.__majorNewsItems || [];
-    if (!items.length) return {};
-    return { '주요 뉴스': items.slice(0, 6).map((n) => n.ko || n.title) };
   };
 
   if (document.readyState === 'loading') {
