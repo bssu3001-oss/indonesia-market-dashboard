@@ -418,9 +418,9 @@ async function fetchYahoo(ticker, interval, range) {
   const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`;
   const url1 = url2.replace('query2', 'query1');
   const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url2)}`,
+    `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(url2)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url2)}`,
-    `https://corsproxy.io/?${encodeURIComponent(url1)}`,
+    `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(url1)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url2)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url1)}`,
     `https://thingproxy.freeboard.io/fetch/${url1}`,
@@ -674,7 +674,7 @@ async function fetchNews() {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(()=>ctrl.abort(), 10000);
-      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(feedUrl)}`, {signal: ctrl.signal});
+      const r = await fetch(`https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(feedUrl)}`, {signal: ctrl.signal});
       clearTimeout(t);
       if (!r.ok) throw new Error();
       const xml = await r.text();
