@@ -419,11 +419,7 @@ async function fetchYahoo(ticker, interval, range) {
   const url1 = url2.replace('query2', 'query1');
   const proxies = [
     `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(url2)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url2)}`,
     `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(url1)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url2)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url1)}`,
-    `https://thingproxy.freeboard.io/fetch/${url1}`,
   ];
   for (const proxyUrl of proxies) {
     try {
@@ -1237,11 +1233,11 @@ setInterval(async()=>{
   delete _chartCache['d1'];
 },5*60*1000);
 </script>
-<script src="실시간.js?v=20261001c"></script>
+<script src="실시간.js?v=20261001d"></script>
 <script src="vendor/lightweight-charts.standalone.production.js"></script>
 <script>
 window.KODEX_CFG = { ticker:'%5EJKSE', name:'JCI (자카르타 종합)', tz:'Asia/Jakarta', openMin:540, closeMin:960, unitPrefix:'', unitSuffix:'', dec:0 };
 </script>
-<script src="차트분석.js?v=9"></script>
+<script src="차트분석.js?v=10"></script>
 </body>
 </html>

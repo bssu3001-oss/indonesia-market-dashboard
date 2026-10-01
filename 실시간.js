@@ -10,11 +10,7 @@
   // ── 여러 CORS 프록시를 순서대로 시도 (하나 막혀도 다음으로) ──
   const PROXIES = [
     (u) => `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(u)}`,
-    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     (u) => `https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(u.replace('query2','query1'))}`,
-    (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u.replace('query2','query1'))}`,
-    (u) => `https://thingproxy.freeboard.io/fetch/${u.replace('query2','query1')}`,
   ];
 
   async function proxyText(url, timeoutMs) {
@@ -349,6 +345,7 @@
     sets.forEach((s) => s.forEach((n) => {
       const t = n.title;
       if (EXCLUDE.some((kw) => t.includes(kw))) return;
+      if (!/인도네시아|인니|IHSG|IDX|자카르타|루피아|JCI|LQ45|Bank Indonesia|\bBI\b/i.test(t)) return;  // 인도네시아와 무관한 글(스팸 등) 제외
       const k = t.toLowerCase().slice(0, 60);
       if (seen.has(k)) return;
       seen.add(k); all.push(n);
