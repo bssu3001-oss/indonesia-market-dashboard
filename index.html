@@ -593,6 +593,8 @@ async function fetchAllLive() {
   if (kol) {
     const c=kol.pct>=0.5?'badge-g':kol.pct<=-0.5?'badge-r':'badge-b';
     setBadge('badge-coal',`KOL $${fmt(kol.price)} ${arrow(kol.pct)}${Math.abs(kol.pct).toFixed(2)}% — ${kol.pct>=0.5?'석탄 강세(호재)':kol.pct<=-0.5?'석탄 약세':'보합'}`,c);
+  } else {
+    setBadge('badge-coal','데이터 없음 (KOL 상장폐지)','badge-b');
   }
 
   // Technical from IHSG weekly history
