@@ -296,7 +296,7 @@ body { font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; background
   <div class="section-label">매매 신호</div>
   <div class="card">
     <div class="card-title" style="margin-bottom:8px;">📡 기술적 지표 (자동)</div>
-    <div class="signal-row"><span class="signal-name">RSI (14일)</span><span class="badge badge-b" id="badge-rsi">로딩 중...</span></div>
+    <div class="signal-row"><span class="signal-name">RSI (14주)</span><span class="badge badge-b" id="badge-rsi">로딩 중...</span></div>
     <div class="signal-row"><span class="signal-name">이평선 배열</span><span class="badge badge-b" id="badge-ma">로딩 중...</span></div>
     <div class="signal-row"><span class="signal-name">단기 모멘텀</span><span class="badge badge-b" id="badge-mom">로딩 중...</span></div>
     <div class="signal-row"><span class="signal-name">변동성</span><span class="badge badge-b" id="badge-vol">로딩 중...</span></div>
@@ -855,7 +855,7 @@ function ruleBasedAnalysis(liveData) {
   const eemPctC  = _liveData?.eem?.pct ?? null;
   const eemColor = eemPctC == null ? 'blue' : eemPctC >= 0.5 ? 'green' : eemPctC <= -0.5 ? 'red' : 'yellow';
   const eemShort = eemPctC != null ? `${eemPctC >= 0 ? '▲' : '▼'}${Math.abs(eemPctC).toFixed(2)}%` : '--';
-  const sc_desc = `<div style="display:flex;gap:3px;flex-wrap:wrap;">${mkChip2('이평선',maShort,maColor)}${mkChip2('모멘텀',momShort,momColor)}${mkChip2('RSI',rsiShort,rsiColor)}${mkChip2('VIX',vixShort,vixColor)}${mkChip2('EIDO',eidoShort,eidoColor)}${mkChip2('EEM',eemShort,eemColor)}${mkChip2('IDR',idrShort,idrColor)}</div>`;
+  const sc_desc = `<div style="display:flex;gap:3px;flex-wrap:wrap;">${mkChip2('이평(주봉)',maShort,maColor)}${mkChip2('모멘텀',momShort,momColor)}${mkChip2('RSI(주봉)',rsiShort,rsiColor)}${mkChip2('VIX',vixShort,vixColor)}${mkChip2('EIDO',eidoShort,eidoColor)}${mkChip2('EEM',eemShort,eemColor)}${mkChip2('IDR',idrShort,idrColor)}</div>`;
 
   const trendConclusion = maBadge==='badge-g'
     ? (newsFavorable ? '상승 추세 + 뉴스 호재 — 눌림목 매수 적극 검토' : '상승 추세 유지 — 눌림목 매수 기회 탐색')
