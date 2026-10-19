@@ -687,6 +687,15 @@ async function fetchAllLive() {
   return _liveData;
 }
 
+// 구글뉴스는 구글 앱스 스크립트 중계로 받음 (클라우드플레어 중계·rss2json·jina는 구글뉴스가 막혀서, 2026-10-19)
+// 코드: 대쉬보드일줄알았니/중계서버_구글스크립트/뉴스중계.gs — 실시간.js도 이 주소를 같이 씀
+var GAS_NEWS_URL = 'https://script.google.com/macros/s/AKfycbzvLwUtRitcf3PsEzumPP1sEaV0ric-HTnCtLltjoTHRFRXSNqsrc_wfBEUC9-OVzyafw/exec';
+function newsRelayUrl(u) {
+  return (GAS_NEWS_URL && u.indexOf('https://news.google.com/') === 0)
+    ? GAS_NEWS_URL + '?url=' + encodeURIComponent(u)
+    : 'https://siiiido-proxy.bssu3001.workers.dev/?url=' + encodeURIComponent(u);
+}
+
 async function fetchNews() {
   const FEEDS = [
     'https://news.google.com/rss/search?q=%EC%9D%B8%EB%8F%84%EB%84%A4%EC%8B%9C%EC%95%84+%EC%A6%9D%EC%8B%9C&hl=ko&gl=KR&ceid=KR:ko',
@@ -696,7 +705,7 @@ async function fetchNews() {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(()=>ctrl.abort(), 10000);
-      const r = await fetch(`https://siiiido-proxy.bssu3001.workers.dev/?url=${encodeURIComponent(feedUrl)}`, {signal: ctrl.signal});
+      const r = await fetch(newsRelayUrl(feedUrl), {signal: ctrl.signal});
       clearTimeout(t);
       if (!r.ok) throw new Error();
       const xml = await r.text();
@@ -718,14 +727,14 @@ async function fetchNews() {
   } else {
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      if (cached?.titles?.length) { allTitles = cached.titles; window.__newsCached = true; }
+      if (cached?.titles?.length && Date.now() - (cached.savedAt || 0) < 86400000) { allTitles = cached.titles; window.__newsCached = true; }
     } catch(e) {}
   }
   window.__newsForAnalysis = allTitles;
   recalcScorecard();
   setNewsBadgesDirect(allTitles);
   const note = document.getElementById('news-live-note');
-  if (note) note.textContent = window.__newsCached ? '* 최근 저장된 뉴스 표시 중 (실시간 로드 실패)' : '* 뉴스 헤드라인 기반 자동 분류';
+  if (note) note.textContent = window.__newsCached ? '* 최근 저장된 뉴스 표시 중 (실시간 로드 실패)' : (allTitles.length ? '* 뉴스 헤드라인 기반 자동 분류' : '* 뉴스를 불러오지 못했어요 (뉴스 항목은 기본값)');
 }
 
 function recalcScorecard() {
@@ -1244,7 +1253,7 @@ setInterval(async()=>{
   delete _chartCache['d1'];
 },5*60*1000);
 </script>
-<script src="실시간.js?v=20261001d"></script>
+<script src="실시간.js?v=20261019a"></script>
 <script src="vendor/lightweight-charts.standalone.production.js"></script>
 <script>
 window.KODEX_CFG = { ticker:'%5EJKSE', name:'JCI (자카르타 종합)', tz:'Asia/Jakarta', openMin:540, closeMin:960, unitPrefix:'', unitSuffix:'', dec:0 };
